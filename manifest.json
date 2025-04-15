@@ -1,0 +1,33 @@
+{
+    "manifest_version": 3,
+    "name": "Leetcode AI-test case generator",
+    "version": "1.0",
+    "description": "This extension generates test cases for Leetcode problems using AI. Leetcode has a lot of problems, but it is hard to find test cases for them. This extension uses AI to generate test cases for Leetcode problems. It uses the Generative Language API from Google Cloud to generate test cases. It is a simple and easy to use extension. Just click on the extension icon and it will generate test cases for the current Leetcode problem. It is a great tool for Leetcode users who want to improve their coding skills and practice more problems. It is also a great tool for Leetcode problem setters who want to generate test cases for their problems. It is a simple and easy to use extension that will help you improve your coding skills and practice more problems.",
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "downloads"
+    ],
+    "host_permissions": [
+        "<all_urls>",
+        "https://generativelanguage.googleapis.com/"
+    ],
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'self'; connect-src https://generativelanguage.googleapis.com/"
+    },
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://leetcode.com/*",
+                "https://www.leetcode.com/*"
+            ],
+            "js": ["content.js"]
+        }
+    ]
+}
