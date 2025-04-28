@@ -16,7 +16,33 @@ async function callGeminiWithImage(imageBase64) {
           role: "user",
           parts: [
             {
-              text: "Generate diverse test cases (trivial, edge cases, challenging scenarios) for the provided LeetCode problem with inputs, expected outputs and brief explanations without revealing any solution hints or approaches.",
+              text: `Generate diverse test cases (trivial, edge cases, challenging scenarios) for the provided LeetCode problem. 
+            For each test case, return ONLY a JSON array of objects with the following keys: 
+            "questionNo" (number), "input" (string), "output" (string), and "explanation" (string). 
+            Do NOT include any extra text or markdown, only the JSON array. 
+            Example format:
+            [
+              {
+                "questionNo": 1,
+                "input": "Input: [1,2,3]",
+                "output": "Output: [6]",
+                "explanation": "The sum of the array elements is calculated."
+              },
+              {
+                "questionNo": 2,
+                "input": "Input: [1,2,3,4]",
+                "output": "Output: [10]",
+                "explanation": "The sum of the array elements is calculated."
+              }
+            ]
+              Note :- don't append this "input" :- or "output in response, above is for demo, just return this like this,
+              {
+                1,
+                "[1,2,3]",
+                "[6]",
+                "The sum of the array elements is calculated."
+              },
+            `,
             },
             {
               inlineData: {
@@ -158,92 +184,72 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Format test cases with proper styling
   function formatTestCases(text) {
-    const lines = text.split("\n");
-    let formattedHtml = `<div style="font-family: system-ui, -apple-system, sans-serif;">`;
-    let inScenarioBlock = false;
-    let inStepsBlock = false;
+    try {
+      // Clean the response text to remove any markdown or unwanted characters
+      const cleanedText = text
+        .replace(/```json\s*/g, "") // Remove "```json" block start
+        .replace(/```/g, "") // Remove "```" block end
+        .trim(); // Remove leading/trailing spaces
 
-    lines.forEach((line) => {
-      if (line.trim()) {
-        // Test Case Headers
-        if (line.toLowerCase().includes("test case")) {
-          formattedHtml += `
-            <h3 style="
-              color: #e09797; 
-              margin: 15px 0 10px 0;
-              font-size: 16px;
+      // Now safely parse the cleaned response into JSON
+      const testCases = JSON.parse(cleanedText);
+
+      let formattedHtml = `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f7f7f7; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">`;
+
+      testCases.forEach((testCase, index) => {
+        const caseColor = `hsl(${(index * 35) % 360}, 70%, 85%)`;
+
+        // Format each test case with distinct colors and styles
+        formattedHtml += `
+          <div style="
+          
+            border-radius: 10px;
+            padding: 16px 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            border-left: 4px solid #e09797;
+          ">
+            <span style="
+              color: black;
+              font-size:14px;
+              font-weight: bold;
+              padding-bottom: 4px;
               border-bottom: 2px solid #e09797;
-              padding-bottom: 5px;
-              font-weight: 600;
-            ">${line}</h3>`;
-        }
-        // Scenario blocks
-        else if (line.toLowerCase().includes("scenario:")) {
-          inScenarioBlock = true;
-          formattedHtml += `
-            <div style="
-              background-color: #f8f0f0;
-              padding: 8px 12px;
-              border-left: 3px solid #e09797;
-              margin: 8px 0;
-              border-radius: 0 4px 4px 0;
-            ">
-            <strong style="color: #333;">${line}</strong><br>`;
-        }
-        // Steps or Expected Results blocks
-        else if (
-          line.toLowerCase().includes("steps:") ||
-          line.toLowerCase().includes("expected:")
-        ) {
-          if (inScenarioBlock) {
-            formattedHtml += `</div>`;
-            inScenarioBlock = false;
-          }
-          inStepsBlock = true;
-          formattedHtml += `
-            <div style="
-              margin: 8px 0;
-              padding-left: 15px;
-            ">
-            <strong style="
-              color: #333;
-              font-size: 14px;
-              display: block;
-              margin-bottom: 5px;
-            ">${line}</strong>`;
-        }
-        // Regular list items
-        else if (
-          line.trim().startsWith("*") ||
-          line.trim().startsWith("-") ||
-          /^\d+\./.test(line)
-        ) {
-          formattedHtml += `
-            <div style="
-              padding-left: ${inStepsBlock ? "15px" : "0"};
-              margin: 4px 0;
-              color: #444;
-              font-size: 14px;
-            ">${line}</div>`;
-        }
-        // Regular text
-        else {
-          if (inScenarioBlock || inStepsBlock) {
-            formattedHtml += `<div style="margin: 4px 0; color: #444; font-size: 14px;">${line}</div>`;
-          } else {
-            formattedHtml += `${line}<br>`;
-          }
-        }
-      }
-    });
+              margin-bottom: 8px;
+              font-family: monospace;
 
-    // Close any open blocks
-    if (inScenarioBlock || inStepsBlock) {
+            ">Case:- ${testCase.questionNo}</span>
+  
+            <div style="font-size: 16px; font-weight: 700; color: #333; margin-bottom: 12px; font-family: monospace;">
+              <strong style="color:black !important; font-weight: 800;">Input:</strong> ${
+                testCase.input
+              }
+            </div>
+  
+            <div style="font-size: 16px; font-weight: 700; color: #333; margin-bottom: 12px; font-family: monospace;">
+              <strong style="color:black !important; font-weight: 800;">Expected Output:</strong> ${
+                testCase.output
+              }
+            </div>
+  
+            <div style="font-size: 14px; color: #555; margin-bottom: 12px; font-family: monospace;">
+              <strong style="color:black !important; font-weight: 800; style="font-size: 16px !important;">Explanation:</strong> ${
+                testCase.explanation || "No explanation provided."
+              }
+            </div>
+          </div>
+          <hr style="border: 1px solid #e09797; margin: 16px 0;" />
+        `;
+      });
+
       formattedHtml += `</div>`;
+      return formattedHtml;
+    } catch (error) {
+      console.error("Error formatting test cases:", error);
+      return "Error formatting test cases: " + error.message;
     }
-
-    formattedHtml += `</div>`;
-    return formattedHtml;
   }
 
   // Helper function to show errors
